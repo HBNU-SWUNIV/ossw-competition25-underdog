@@ -1,6 +1,6 @@
 # OSSW-Competition-TEMPLATE
 소중한 오픈 소스 활용SW 경진대회 
-# 국립한밭대학교 ㅁㅁㅁㅁ팀
+# 국립한밭대학교 UnderDog팀
 
 ## 주제 
 - XXX를 활용한 XXX (경진대회 참여 주제) 
