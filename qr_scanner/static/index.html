@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR 코드 안전 검사기</title>
+    <style>
+        /* 기본 스타일 및 폰트 설정 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        header p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        /* 파일 업로드 섹션 */
+        #main-page .upload-area {
+            border: 2px dashed #bdc3c7;
+            border-radius: 12px;
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #main-page .upload-area:hover {
+            border-color: #3498db;
+            background-color: #f9f9f9;
+        }
+
+        #main-page #qr-image-input {
+            display: none; /* 실제 input은 숨김 */
+        }
+
+        #main-page #file-name {
+            margin-top: 15px;
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        /* 로딩 화면 */
+        #loading-page .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 결과 화면 */
+        #result-box {
+            padding: 30px;
+            border-radius: 12px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        
+        /* 상태별 색상 클래스 */
+        .safe { background-color: #2ecc71; } /* 안전: 초록 */
+        .danger { background-color: #e74c3c; } /* 위험: 빨강 */
+        .warning { background-color: #f39c12; } /* 주의: 주황 */
+        
+        #result-status {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        #result-url {
+            word-break: break-all;
+            background-color: rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        
+        #result-reason {
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        /* 화면 숨김/표시 처리 */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>QR 코드 안전 검사기</h1>
+            <p id="sub-title">이미지를 업로드하여 QR 코드에 숨겨진 링크의 안전성을 확인하세요.</p>
+        </header>
+
+        <main>
+            <section id="main-page">
+                <div class="upload-area" id="upload-box">
+                    <p>클릭하거나 파일을 드래그하여<br>QR 코드 이미지를 업로드하세요.</p>
+                    <input type="file" id="qr-image-input" accept="image/*">
+                    <p id="file-name"></p>
+                </div>
+                <button class="btn" id="analyze-button" disabled>분석하기</button>
+            </section>
+
+            <section id="loading-page" class="hidden">
+                <div class="spinner"></div>
+                <p>QR 코드를 분석 중입니다... 잠시만 기다려주세요.</p>
+            </section>
+
+            <section id="result-page" class="hidden">
+                <div id="result-box">
+                    <h2 id="result-status"></h2>
+                    <p id="result-url"></p>
+                    <p id="result-reason"></p>
+                </div>
+                <button class="btn" id="retry-button">다시 검사하기</button>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- 1. HTML 요소 가져오기 ---
+        const mainPage = document.getElementById('main-page');
+        const loadingPage = document.getElementById('loading-page');
+        const resultPage = document.getElementById('result-page');
+
+        const uploadBox = document.getElementById('upload-box');
+        const qrImageInput = document.getElementById('qr-image-input');
+        const fileNameDisplay = document.getElementById('file-name');
+        const analyzeButton = document.getElementById('analyze-button');
+        const retryButton = document.getElementById('retry-button');
+        
+        const subTitle = document.getElementById('sub-title');
+
+        const resultBox = document.getElementById('result-box');
+        const resultStatus = document.getElementById('result-status');
+        const resultUrl = document.getElementById('result-url');
+        const resultReason = document.getElementById('result-reason');
+
+        // --- 2. 이벤트 리스너 설정 ---
+        
+        // 업로드 영역 클릭 시 파일 입력창 열기
+        uploadBox.addEventListener('click', () => qrImageInput.click());
+
+        // 파일이 선택되었을 때 처리
+        qrImageInput.addEventListener('change', () => {
+            if (qrImageInput.files.length > 0) {
+                const file = qrImageInput.files[0];
+                fileNameDisplay.textContent = file.name;
+                analyzeButton.disabled = false; // 파일 선택 시 버튼 활성화
+            }
+        });
+
+        // '분석하기' 버튼 클릭 시
+        analyzeButton.addEventListener('click', () => {
+            if (qrImageInput.files.length === 0) {
+                alert('QR 코드 이미지 파일을 선택해주세요.');
+                return;
+            }
+
+            // 화면 전환: 메인 -> 로딩
+            mainPage.classList.add('hidden');
+            loadingPage.classList.remove('hidden');
+
+            
+            const formData = new FormData();
+            formData.append('file', qrImageInput.files[0]);
+
+            fetch('/scan', { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(data => { displayResults(data); })
+            .catch(error => { 
+            console.error(error); 
+            alert('분석 실패'); 
+        });
+        
+        });
+
+        // '다시 검사하기' 버튼 클릭 시
+        retryButton.addEventListener('click', () => {
+            // 모든 상태 초기화
+            resultPage.classList.add('hidden');
+            mainPage.classList.remove('hidden');
+
+            qrImageInput.value = ''; // 파일 선택 초기화
+            fileNameDisplay.textContent = '';
+            analyzeButton.disabled = true;
+            subTitle.textContent = "이미지를 업로드하여 QR 코드에 숨겨진 링크의 안전성을 확인하세요.";
+
+        });
+        
+        // --- 4. 결과 표시 함수 ---
+        function displayResults(data) {
+            // 화면 전환: 로딩 -> 결과
+            loadingPage.classList.add('hidden');
+            resultPage.classList.remove('hidden');
+
+            // 결과 데이터에 따라 내용 및 스타일 변경
+            resultStatus.textContent = data.status;
+            resultUrl.textContent = data.url;
+            resultReason.textContent = data.reason;
+
+            // 기존의 상태 클래스를 모두 제거하고 새로운 클래스 추가
+            resultBox.className = ''; // 클래스 초기화
+            if (data.status === '안전') {
+                resultBox.classList.add('safe');
+            } else if (data.status === '위험') {
+                resultBox.classList.add('danger');
+            } else if (data.status === '주의') {
+                resultBox.classList.add('warning');
+            }
+            
+            subTitle.textContent = "분석 결과가 나왔습니다.";
+        }
+
+    </script>
+
+</body>
+</html>
