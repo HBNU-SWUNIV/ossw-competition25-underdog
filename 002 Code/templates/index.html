@@ -228,13 +228,13 @@
 
             // [중요] 실제로는 이 부분을 fetch API로 백엔드와 통신합니다.
             // TODO: 실제 fetch API 호출로 교체
-            // fetch('/scan', { method: 'POST', body: formData })
-            //     .then(response => response.json())
-            //     .then(data => { displayResults(data); })
-            //     .catch(error => { console.error(error); alert('분석 실패'); });
+            fetch('/scan', { method: 'POST', body: formData })
+                 .then(response => response.json())
+                 .then(data => { displayResults(data); })
+                 .catch(error => { console.error(error); alert('분석 실패'); });
             
             // 시뮬레이션을 위해 2초 후 가상의 결과 데이터를 반환합니다.
-            setTimeout(() => {
+            /*setTimeout(() => {
                 // 랜덤으로 결과 생성 (테스트용)
                 const results = [
                     { status: '안전', url: 'https://www.google.com', reason: '알려진 위협이 없는 안전한 URL입니다.' },
@@ -245,7 +245,7 @@
                 
                 displayResults(randomResult);
 
-            }, 2000);
+            }, 2000);*/
         });
 
         // '다시 검사하기' 버튼 클릭 시

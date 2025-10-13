@@ -1,49 +1,27 @@
-import cv2
-from safe_url import check_url_safety
+# qr_analyzer.py (zxing-cpp 최종 엔진)
 
+from PIL import Image
+import zxingcpp
 
-def analyze_qr_code(image_path):
+def extract_url_from_image(image_file):
     """
-    OpenCV를 사용하여 이미지 파일에서 QR 코드를 분석하고,
-    추출된 데이터를 문자열(URL)로 반환합니다.
+    가장 강력한 zxing-cpp 라이브러리를 사용하여 QR 코드를 추출합니다.
+    복잡한 디자이너 QR 코드에 대한 인식률이 매우 높습니다.
     """
     try:
-        # 이미지를 읽어옵니다.
-        image = cv2.imread(image_path)
-        if image is None:
-            print(f"❌ '{image_path}' 파일을 찾을 수 없거나 이미지가 아닙니다.")
-            return None
+        # 1. Pillow를 사용해 이미지를 엽니다.
+        image = Image.open(image_file)
+        
+        # 2. zxing-cpp의 read_barcodes 함수로 QR 코드를 찾습니다.
+        results = zxingcpp.read_barcodes(image)
 
-        # QR 코드 탐지기 초기화 및 실행
-        detector = cv2.QRCodeDetector()
-        qr_data, bbox, straight_qrcode = detector.detectAndDecode(image)
-
-        # 데이터가 성공적으로 추출되었다면 반환
-        if qr_data:
-            return qr_data
+        # 3. QR 코드를 찾았는지 확인합니다.
+        if results:
+            # 첫 번째로 찾은 QR 코드의 텍스트를 반환합니다.
+            return results[0].text
         else:
-            return None  # QR 코드가 없을 경우
+            return None # QR 코드를 못 찾은 경우
 
     except Exception as e:
-        print(f"❌ 이미지 분석 중 오류 발생: {e}")
+        print(f"❌ 이미지 파일 처리 중 예상치 못한 오류 발생: {e}")
         return None
-
-
-if __name__ == "__main__":
-    print("🔍 QR 코드 기반 URL 안전성 검사 프로그램 시작 (OpenCV 엔진)")
-
-    # 1️⃣ 이미지 파일 경로 입력받기
-    image_path = input("분석할 QR 이미지 파일 경로를 입력하세요 (예: test.png): ").strip()
-
-    # 2️⃣ QR 코드 분석
-    qr_data = analyze_qr_code(image_path)
-
-    if qr_data is None:
-        print("⚠️ 이미지에서 QR 코드를 찾을 수 없습니다.")
-    else:
-        print(f"📦 QR 코드에서 추출된 데이터: {qr_data}")
-
-        # 3️⃣ URL 안전성 검사 (safe_url.py의 함수 호출)
-        # 이 부분은 기존과 동일하게 작동합니다.
-        result = check_url_safety(qr_data)
-        print(f"✅ 검사 결과: {result}")
