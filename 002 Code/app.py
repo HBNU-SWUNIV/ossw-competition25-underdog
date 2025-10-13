@@ -1,7 +1,7 @@
 import os 
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
-import main
+from qr_analyzer import analyze_qr_code
 
 # 1. flask 앱 생성
 
