@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>UnderDog QR 스캐너</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        .container { max-width: 500px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>QR 코드 스미싱 검사기</h2>
+        <p>검사할 QR코드 이미지를 업로드하세요.</p>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/png, image/jpeg">
+            <input type="submit" value="검사 시작">
+        </form>
+    </div>
+</body>
+</html>
