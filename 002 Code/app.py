@@ -58,8 +58,8 @@ def upload_file():
         # 4. 프론트엔드에 보낼 최종 결과(JSON)를 만듭니다.
         result = {
             'status': final_status,
-            # 리디렉션이 있었다면 최종 목적지를, 아니면 원본 URL을 보여줍니다.
-            'url': safety_info['final_url'] if safety_info['redirected'] else safety_info['original_url'],
+            #'url' 키에 URL 문자열만 들어가야 합니다!
+            'url': safety_info['final_url'] if safety_info['redirected'] else safety_info['original_url'], 
             'reason': reason
         }
         
