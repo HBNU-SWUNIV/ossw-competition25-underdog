@@ -3,16 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR 코드 안전 검사기</title>
+    <title>QR Code ScanGuard</title>
     <style>
-        /* 기본 스타일 및 폰트 설정 */
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Poppins:wght@600;700&display=swap');
         
+        :root {
+            --primary-color: #3498db;
+            --safe-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-gray-color: #ecf0f1;
+            --dark-gray-color: #7f8c8d;
+            --text-color: #2c3e50;
+            --cyan-accent: #00e0ff;
+        }
+
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            color: var(--text-color);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -21,103 +32,189 @@
             box-sizing: border-box;
         }
 
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            padding: 15px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .logo-shield {
+            position: relative;
+            margin-right: 18px;
+            color: var(--primary-color);
+            overflow: hidden;
+        }
+        
+        .logo-shield::after {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background: linear-gradient(145deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%);
+            transform: rotate(-20deg);
+            animation: shield-shine 4s ease-in-out infinite;
+        }
+        @keyframes shield-shine {
+            0%, 100% { transform: translateX(-150%) rotate(-20deg); }
+            50% { transform: translateX(150%) rotate(-20deg); }
+        }
+
+        .logo-text h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8em;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .logo-text .scan {
+            color: var(--text-color);
+        }
+        .logo-text .guard {
+            color: var(--cyan-accent);
+            text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
+        }
+
         .container {
             width: 100%;
             max-width: 500px;
             background-color: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             padding: 40px;
             text-align: center;
-            transition: all 0.3s ease;
+            overflow: hidden;
         }
 
         header h1 {
-            font-size: 2em;
+            font-size: 2.2em;
             margin-bottom: 10px;
-            color: #2c3e50;
         }
 
         header p {
-            color: #7f8c8d;
-            margin-bottom: 30px;
+            color: var(--dark-gray-color);
+            margin-bottom: 40px;
+            font-weight: 500;
         }
 
-        /* 파일 업로드 섹션 */
-        #main-page .upload-area {
-            border: 2px dashed #bdc3c7;
-            border-radius: 12px;
-            padding: 40px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .page-section {
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+        .page-section.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            position: absolute;
+            width: calc(100% - 80px);
+            pointer-events: none;
         }
         
-        #main-page .upload-area:hover {
-            border-color: #3498db;
-            background-color: #f9f9f9;
+        #upload-box {
+            border: 2px dashed var(--light-gray-color);
+            border-radius: 12px;
+            padding: 30px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        #main-page #qr-image-input {
-            display: none; /* 실제 input은 숨김 */
+        #upload-box.drag-over {
+            border-color: var(--primary-color);
+            background-color: #f9fcff;
+            transform: scale(1.02);
+        }
+        
+        #upload-icon {
+            color: var(--primary-color);
+            margin-bottom: 15px;
         }
 
-        #main-page #file-name {
-            margin-top: 15px;
-            color: #3498db;
-            font-weight: bold;
+        #qr-image-input { display: none; }
+
+        #image-preview-container {
+            margin-top: 20px;
+        }
+        
+        #image-preview {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 8px;
+            border: 1px solid var(--light-gray-color);
         }
 
-        /* 버튼 스타일 */
+        #file-name {
+            margin-top: 10px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
         .btn {
             width: 100%;
             padding: 15px;
             font-size: 1.1em;
             font-weight: bold;
             color: #fff;
-            background-color: #3498db;
+            background-color: var(--primary-color);
             border: none;
             border-radius: 8px;
             cursor: pointer;
             margin-top: 20px;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .btn:hover {
             background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
         .btn:disabled {
-            background-color: #95a5a6;
+            background-color: #bdc3c7;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        /* 로딩 화면 */
         #loading-page .spinner {
-            width: 60px;
-            height: 60px;
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid #3498db;
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-gray-color);
+            border-top: 5px solid var(--primary-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
+            margin: 30px auto;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* 결과 화면 */
         #result-box {
             padding: 30px;
             border-radius: 12px;
             color: #fff;
             margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        /* 상태별 색상 클래스 */
-        .safe { background-color: #2ecc71; } /* 안전: 초록 */
-        .danger { background-color: #e74c3c; } /* 위험: 빨강 */
-        .warning { background-color: #f39c12; } /* 주의: 주황 */
+        .safe { background-color: var(--safe-color); }
+        .danger { background-color: var(--danger-color); }
+        .warning { background-color: var(--warning-color); }
+        
+        #result-icon svg {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 10px;
+        }
         
         #result-status {
             font-size: 2.5em;
@@ -127,24 +224,33 @@
         
         #result-url {
             word-break: break-all;
-            background-color: rgba(0,0,0,0.1);
-            padding: 10px;
+            background-color: rgba(0,0,0,0.15);
+            padding: 12px;
             border-radius: 6px;
-            margin-top: 15px;
+            margin-top: 20px;
+            font-size: 1.1em;
         }
         
         #result-reason {
-            font-size: 0.9em;
-            margin-top: 10px;
-        }
-
-        /* 화면 숨김/표시 처리 */
-        .hidden {
-            display: none;
+            font-size: 1em;
+            margin-top: 15px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
+
+    <header class="site-header">
+        <div class="logo-shield">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M5.338 1.59a.5.5 0 0 0-.588.42l-1.42 5.44a.5.5 0 0 0 .193.493l4.312 3.45a.5.5 0 0 0 .614 0l4.312-3.45a.5.5 0 0 0 .193-.493l-1.42-5.44a.5.5 0 0 0-.588-.42H5.338zm1.328 6.452L8 10.07l1.334-2.028a.5.5 0 0 0-.416-.765H7.084a.5.5 0 0 0-.418.765z"/>
+                <path d="M8 0a1 1 0 0 0-1 1v1.133a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V1a1 1 0 0 0-1-1z"/>
+            </svg>
+        </div>
+        <div class="logo-text">
+            <h1><span class="scan">QR Code </span><span class="guard">ScanGuard</span></h1>
+        </div>
+    </header>
 
     <div class="container">
         <header>
@@ -153,22 +259,31 @@
         </header>
 
         <main>
-            <section id="main-page">
+            <section id="main-page" class="page-section">
                 <div class="upload-area" id="upload-box">
-                    <p>클릭하거나 파일을 드래그하여<br>QR 코드 이미지를 업로드하세요.</p>
+                    <div id="upload-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 0a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 4.095 0 5.555 0 7.318 0 9.366 1.708 11 3.781 11H7.5V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11h4.188C14.502 11 16 9.57 16 7.773c0-1.636-1.242-2.969-2.834-3.194C12.923 1.999 10.69 0 8 0zm-.5 14.5V11h1v3.5a.5.5 0 0 1-1 0z"/>
+                        </svg>
+                    </div>
+                    <p>클릭하거나 파일을 드래그하여 업로드</p>
                     <input type="file" id="qr-image-input" accept="image/*">
+                    <div id="image-preview-container">
+                        <img id="image-preview" class="hidden">
+                    </div>
                     <p id="file-name"></p>
                 </div>
                 <button class="btn" id="analyze-button" disabled>분석하기</button>
             </section>
 
-            <section id="loading-page" class="hidden">
+            <section id="loading-page" class="page-section hidden">
                 <div class="spinner"></div>
                 <p>QR 코드를 분석 중입니다... 잠시만 기다려주세요.</p>
             </section>
 
-            <section id="result-page" class="hidden">
+            <section id="result-page" class="page-section hidden">
                 <div id="result-box">
+                    <div id="result-icon"></div>
                     <h2 id="result-status"></h2>
                     <p id="result-url"></p>
                     <p id="result-reason"></p>
@@ -179,114 +294,133 @@
     </div>
 
     <script>
-        // --- 1. HTML 요소 가져오기 ---
+        const pageSections = document.querySelectorAll('.page-section');
         const mainPage = document.getElementById('main-page');
         const loadingPage = document.getElementById('loading-page');
         const resultPage = document.getElementById('result-page');
-
         const uploadBox = document.getElementById('upload-box');
         const qrImageInput = document.getElementById('qr-image-input');
+        const imagePreview = document.getElementById('image-preview');
         const fileNameDisplay = document.getElementById('file-name');
         const analyzeButton = document.getElementById('analyze-button');
         const retryButton = document.getElementById('retry-button');
-        
         const subTitle = document.getElementById('sub-title');
-
         const resultBox = document.getElementById('result-box');
+        const resultIcon = document.getElementById('result-icon');
         const resultStatus = document.getElementById('result-status');
         const resultUrl = document.getElementById('result-url');
         const resultReason = document.getElementById('result-reason');
-
-        // --- 2. 이벤트 리스너 설정 ---
-        
-        // 업로드 영역 클릭 시 파일 입력창 열기
-        uploadBox.addEventListener('click', () => qrImageInput.click());
-
-        // 파일이 선택되었을 때 처리
-        qrImageInput.addEventListener('change', () => {
+        const icons = {
+            safe: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`,
+            danger: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>`,
+            warning: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>`
+        };
+        function switchPage(pageId) {
+            pageSections.forEach(section => {
+                if (section.id === pageId) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        }
+        function updateImageDisplay() {
             if (qrImageInput.files.length > 0) {
                 const file = qrImageInput.files[0];
                 fileNameDisplay.textContent = file.name;
-                analyzeButton.disabled = false; // 파일 선택 시 버튼 활성화
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+                analyzeButton.disabled = false;
+            }
+        }
+        function displayResults(data) {
+            resultStatus.textContent = data.status || '오류';
+            resultUrl.textContent = data.url || 'URL을 찾을 수 없습니다.';
+            resultReason.textContent = data.reason || '알 수 없는 오류가 발생했습니다.';
+            
+            resultBox.className = '';
+            let statusClass = 'warning';
+            let icon = icons.warning;
+
+            if (data.status === '안전') { statusClass = 'safe'; icon = icons.safe; } 
+            else if (data.status === '위험') { statusClass = 'danger'; icon = icons.danger; }
+            else if (data.status === '주의') { statusClass = 'warning'; icon = icons.warning; }
+            
+            resultBox.classList.add(statusClass);
+            resultIcon.innerHTML = icon;
+
+            subTitle.textContent = "분석 결과가 나왔습니다.";
+            switchPage('result-page');
+        }
+        uploadBox.addEventListener('click', () => qrImageInput.click());
+        qrImageInput.addEventListener('change', updateImageDisplay);
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('drag-over');
+        });
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('drag-over');
+        });
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) {
+                qrImageInput.files = e.dataTransfer.files;
+                updateImageDisplay();
             }
         });
-
-        // '분석하기' 버튼 클릭 시
+        
         analyzeButton.addEventListener('click', () => {
             if (qrImageInput.files.length === 0) {
                 alert('QR 코드 이미지 파일을 선택해주세요.');
                 return;
             }
-
-            // 화면 전환: 메인 -> 로딩
-            mainPage.classList.add('hidden');
-            loadingPage.classList.remove('hidden');
-
-            // --- 3. 백엔드 통신 (현재는 시뮬레이션) ---
+            switchPage('loading-page');
             const formData = new FormData();
             formData.append('file', qrImageInput.files[0]);
-
-            // [중요] 실제로는 이 부분을 fetch API로 백엔드와 통신합니다.
-            // TODO: 실제 fetch API 호출로 교체
-            fetch('/scan', { method: 'POST', body: formData })
-                 .then(response => response.json())
-                 .then(data => { displayResults(data); })
-                 .catch(error => { console.error(error); alert('분석 실패'); });
             
-            // 시뮬레이션을 위해 2초 후 가상의 결과 데이터를 반환합니다.
-            /*setTimeout(() => {
-                // 랜덤으로 결과 생성 (테스트용)
-                const results = [
-                    { status: '안전', url: 'https://www.google.com', reason: '알려진 위협이 없는 안전한 URL입니다.' },
-                    { status: '위험', url: 'http://evil-site-phishing.com/login', reason: '알려진 피싱(SOCIAL_ENGINEERING) 사이트입니다.' },
-                    { status: '주의', url: 'https://vo.la/AAbbCC (최종: http://some-unknown-blog.com)', reason: '단축 URL이 사용되었습니다. 최종 목적지를 반드시 확인하세요.' }
-                ];
-                const randomResult = results[Math.floor(Math.random() * results.length)];
-                
-                displayResults(randomResult);
-
-            }, 2000);*/
+            fetch('/scan', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`서버 응답 오류: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayResults(data);
+            })
+            .catch(error => {
+                console.error('분석 요청 실패:', error);
+                displayResults({
+                    status: '오류',
+                    url: '분석 실패',
+                    reason: '서버에 연결할 수 없거나 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+                });
+            });
         });
 
-        // '다시 검사하기' 버튼 클릭 시
+        // '다시 검사하기' 버튼 클릭 이벤트 (핵심 수정 영역)
         retryButton.addEventListener('click', () => {
-            // 모든 상태 초기화
-            resultPage.classList.add('hidden');
-            mainPage.classList.remove('hidden');
-
-            qrImageInput.value = ''; // 파일 선택 초기화
-            fileNameDisplay.textContent = '';
-            analyzeButton.disabled = true;
+            // 1. 페이지를 메인 화면으로 전환
+            switchPage('main-page');
+            
+            // 2. 파일 입력과 관련된 모든 상태를 초기화
+            qrImageInput.value = ''; // 선택된 파일 목록을 비웁니다. (가장 중요)
+            fileNameDisplay.textContent = ''; // 표시되던 파일 이름을 비웁니다.
+            imagePreview.src = ''; // 이미지 미리보기의 소스를 비웁니다.
+            imagePreview.classList.add('hidden'); // 이미지 미리보기를 숨깁니다.
+            
+            // 3. 버튼과 안내 문구를 초기 상태로 되돌립니다.
+            analyzeButton.disabled = true; // '분석하기' 버튼을 비활성화합니다.
             subTitle.textContent = "이미지를 업로드하여 QR 코드에 숨겨진 링크의 안전성을 확인하세요.";
-
         });
-        
-        // --- 4. 결과 표시 함수 ---
-        function displayResults(data) {
-            // 화면 전환: 로딩 -> 결과
-            loadingPage.classList.add('hidden');
-            resultPage.classList.remove('hidden');
-
-            resultUrl.textContent = data.url;
-            
-            // 결과 데이터에 따라 내용 및 스타일 변경
-            resultStatus.textContent = data.status;
-            resultUrl.textContent = data.url;
-            resultReason.textContent = data.reason;
-
-            // 기존의 상태 클래스를 모두 제거하고 새로운 클래스 추가
-            resultBox.className = ''; // 클래스 초기화
-            if (data.status === '안전') {
-                resultBox.classList.add('safe');
-            } else if (data.status === '위험') {
-                resultBox.classList.add('danger');
-            } else if (data.status === '주의') {
-                resultBox.classList.add('warning');
-            }
-            
-            subTitle.textContent = "분석 결과가 나왔습니다.";
-        }
-
     </script>
 
 </body>

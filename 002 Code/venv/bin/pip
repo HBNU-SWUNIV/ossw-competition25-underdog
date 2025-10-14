@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/home/server/ossw-competition25-underdog/002 Code/venv/bin/python3" "$0" "$@"
+'''exec' "/home/jni00111/ossw-competition25-underdog/002 Code/venv/bin/python3" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re

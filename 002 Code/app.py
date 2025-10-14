@@ -21,7 +21,6 @@ def allowed_file(filename):
 def index():
     return render_template('index.html')
 
-# --- 파일 업로드 및 분석 API (가장 중요한 부분) ---
 @app.route('/scan', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -29,41 +28,49 @@ def upload_file():
     
     file = request.files['file']
 
-    if file.filename == '' or not allowed_file(file.filename):
-        return jsonify({'status': '오류', 'reason': '파일을 선택하지 않았거나, 허용되지 않는 파일 형식입니다.'}), 400
+    if file.filename == '':
+        return jsonify({'status': '오류', 'reason': '파일을 선택하지 않았습니다.'}), 400
     
-    if file:
-        # 1. QR 코드에서 URL 추출
+    if file and allowed_file(file.filename):
         url = extract_url_from_image(file)
 
         if url is None:
             return jsonify({'status': '오류', 'url': 'N/A', 'reason': '이미지에서 QR 코드를 찾을 수 없거나 손상된 파일입니다.'})
         
-        # 2. 업그레이드된 safe_url 함수를 호출하고 결과(딕셔너리)를 받습니다.
         safety_info = check_url_safety(url)
 
-        # 3. 결과에 따라 최종 상태(status)와 설명(reason)을 결정합니다.
+        # --- ✨ 여기가 최종 판단 로직! ✨ ---
         final_status = safety_info['status']
-        reason = "알려진 위협이 없는 안전한 URL입니다."
-
-        # 리디렉션이 있었고, 최종 목적지가 '안전'한 경우에만 '주의' 상태로 변경
-        if safety_info['redirected'] and final_status == "안전":
-            final_status = "주의"
-            reason = "이 QR코드는 다른 주소로 이동합니다. 최종 목적지는 안전해 보입니다."
-        elif final_status == "위험":
-            reason = "알려진 피싱 또는 악성 사이트입니다."
+        reason = ""
+        
+        if final_status == "위험":
+            reason = "Google Safe Browsing에서 최종 목적지를 위험 사이트로 분류했습니다."
         elif final_status == "오류":
-             reason = "URL의 안전성을 검사하는 중 오류가 발생했습니다."
+            reason = safety_info.get('reason', "URL의 안전성을 검사하는 중 오류가 발생했습니다.")
+        elif final_status == "안전":
+            shortener_domains = ["q.me-qr.com", "bit.ly", "tinyurl.com", "goo.gl", "me2.do"]
+            original_domain = ""
+            try:
+                original_domain = safety_info['original_url'].split('/')[2]
+            except (IndexError, AttributeError):
+                pass
 
-        # 4. 프론트엔드에 보낼 최종 결과(JSON)를 만듭니다.
+            if safety_info['redirected'] and original_domain in shortener_domains:
+                final_status = "주의"
+                reason = "단축 URL이 사용되었습니다. 최종 목적지는 안전해 보이지만 주의가 필요합니다."
+            else:
+                final_status = "안전"
+                reason = "알려진 위협이 없는 안전한 URL입니다."
+        # -----------------------------------
+        
+        # --- ✨ 여기가 Key 이름 통일 부분! ✨ ---
         result = {
             'status': final_status,
-            #'url' 키에 URL 문자열만 들어가야 합니다!
-            'url': safety_info['final_url'] if safety_info['redirected'] else safety_info['original_url'], 
+            'url': safety_info['final_url'],  # 'final_url' 대신 'url' 키를 사용
             'reason': reason
         }
-        
-        # 5. 최종 결과를 JSON 형태로 프론트엔드에 전송
+        # -----------------------------------
+
         return jsonify(result)
 
 # --- 서버 실행 ---
