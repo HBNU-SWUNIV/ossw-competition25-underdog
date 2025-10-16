@@ -1,9 +1,8 @@
 # app.py (최종 완성본)
 
 import os
-from flask import Flask, render_template, request, jsonify # jsonify를 꼭 import 해야 합니다.
+from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
-# 우리 팀의 핵심 모듈들을 불러옵니다.
 from qr_analyzer import extract_url_from_image
 from safe_url import check_url_safety
 
@@ -39,7 +38,6 @@ def upload_file():
         
         safety_info = check_url_safety(url)
 
-        # --- ✨ 여기가 최종 판단 로직! ✨ ---
         final_status = safety_info['status']
         reason = ""
         
@@ -61,15 +59,12 @@ def upload_file():
             else:
                 final_status = "안전"
                 reason = "알려진 위협이 없는 안전한 URL입니다."
-        # -----------------------------------
-        
-        # --- ✨ 여기가 Key 이름 통일 부분! ✨ ---
+
         result = {
             'status': final_status,
-            'url': safety_info['final_url'],  # 'final_url' 대신 'url' 키를 사용
+            'url': safety_info['final_url'],
             'reason': reason
         }
-        # -----------------------------------
 
         return jsonify(result)
 

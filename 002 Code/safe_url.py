@@ -1,5 +1,3 @@
-# safe_url.py (API 중심 최종 버전)
-
 import os
 import requests
 import json
@@ -15,9 +13,8 @@ def check_url_safety(url_to_check):
     final_url = url_to_check
     redirected = False
     
-    # 1. URL 추적 (더 안정적인 GET 방식으로 변경)
+    # URL 추적 
     try:
-        # stream=True로 헤더만 먼저 받고, 전체 페이지를 다운로드하지 않아 빠릅니다.
         with requests.get(url_to_check, allow_redirects=True, timeout=5, verify=False, stream=True) as response:
             final_url = response.url
         
@@ -33,8 +30,7 @@ def check_url_safety(url_to_check):
             "reason": "URL에 접속할 수 없습니다. (네트워크 오류)"
         }
 
-    # 2. Google Safe Browsing API 검사
-    # (API 키가 없으면 바로 오류 반환)
+    # Google Safe Browsing API 검사
     if not API_KEY:
         return {
             "original_url": url_to_check, "final_url": final_url,

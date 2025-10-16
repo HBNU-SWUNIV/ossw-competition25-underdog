@@ -3,10 +3,7 @@ from PIL import Image
 import zxingcpp
 
 def extract_url_from_image(image_file):
-    """
-    zxing-cpp 라이브러리를 사용하여 QR 코드에서 URL을 추출합니다.
-    성공시 URL 문자열, 실패시 None을 반환합니다.
-    """
+    # zxing-cpp 라이브러리를 사용하여 QR 코드에서 URL을 추출합니다.
     try:
         image = Image.open(image_file)
         results = zxingcpp.read_barcodes(image)
